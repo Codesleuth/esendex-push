@@ -9,7 +9,8 @@ This app is currently hosted at [push-codesleuth.rhcloud.com](http://push-codesl
 ### Setting Up
 Clone the repository and install the dependency modules with:
 ```
-npm install```
+npm install
+```
 
 ### Tests
 The tests can be run with npm by first installing the dev dependencies and then running the npm test suite with mocha. This has been added to the package as a test script which means you can run the following:
