@@ -7,9 +7,9 @@ describe("RequestParser", function () {
 
 		var xml2jsMock;
 		var requestStub;
-		var result;
 		var expectedData;
 		var expectedParsedMessage;
+		var callbackSpy;
 
 		before(function () {
 
@@ -33,11 +33,11 @@ describe("RequestParser", function () {
 
 			xml2jsMock.parseString
 				  	  .withArgs(expectedData, sinon.match.func)
-				      .callsArgWith(1, null, expectedParsedMessage);
+				      .callsArgWith(1, null, expectedParsedMessage, expectedData);
 
-			parser.Parse(requestStub, function (actualMessage) {
-				result = actualMessage;
-			});
+			callbackSpy = sinon.spy();
+
+			parser.Parse(requestStub, callbackSpy);
 		});
 
 		
@@ -53,8 +53,8 @@ describe("RequestParser", function () {
 			sinon.assert.calledWith(xml2jsMock.parseString, expectedData, sinon.match.func);
 		});
 
-		it('should have called the callback with the expected parsed message', function () {
-			assert(result, expectedParsedMessage);
+		it('should have called the callback with the expected parsed message and raw data', function () {
+			sinon.assert.calledWith(callbackSpy, expectedParsedMessage, expectedData);
 		});
 	});
 
