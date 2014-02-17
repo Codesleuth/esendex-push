@@ -1,5 +1,7 @@
 # Esendex Push
 
+[![Build Status](https://travis-ci.org/Codesleuth/esendex-push.png?branch=master)](https://travis-ci.org/Codesleuth/esendex-push)
+
 This is a consumer proof of concept implementation of the [Esendex Push Notifications](http://developers.esendex.com/APIs/Push-Notifications) in NodeJS.
 It was written to be hosted on the [Red Hat OpenShift](https://www.openshift.com/) platform but can be modified easily to host on other platforms such as [heroku](https://www.heroku.com) with little effort.
 
