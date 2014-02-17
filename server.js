@@ -3,30 +3,64 @@ var http = require('http'),
     events = require('events'),
     xml2js = require('xml2js'),
     fs = require("fs"),
-    PushHandler = require("./lib/pushhandler");    
+    PushHandler = require("./lib/pushhandler"),
+    ClientList = require('./lib/clientlist');
 
-var clients = {};
-var clientIndex = 0;
 
-function notifyClients(message) {
-    for (var key in clients) {
-        console.log("Notifying client %s", key);
-        
-        var client = clients[key];
-        client.res.write("data: " + JSON.stringify(message) + "\n\n");
+
+function getClientAddress(client) {
+    if (client.name === undefined) {
+        client.name = (client.req.headers['x-forwarded-for'] || '').split(',')[0] || client.req.connection.remoteAddress;
     }
-}
+    return client.name;
+};
+
+var clients = new ClientList();
+
+var notifier = new events.EventEmitter();
+notifier.on("notify", function (message) {
+    clients.each(function (client) {
+        if (client.accountId == message.accountId) {
+            console.log("Notifying client '%s'", getClientAddress(client));
+            client.res.write("data: " + JSON.stringify(message) + "\n\n");
+        }
+    });
+})
+.on("connected", function (client) {
+    client.res.write("data: " + JSON.stringify({"event": "connect", "accountId": client.accountId}) + "\n\n");
+});
 
 var pusher = new PushHandler();
-pusher.on('inbound', function (message) {
-    console.log("Got 'inbound' with %j", message);
-    notifyClients(message);
-}).on('delivered', function (message) {
-    console.log("Got 'delivered' with %j", message);
-    notifyClients(message);
-}).on('failure', function (message) {
-    console.log("Got 'failure' with %j", message);
-    notifyClients(message);
+pusher.on('inbound', function (message, body) {
+    console.log("Got 'inbound' push for AccountId '%s'", message.InboundMessage.AccountId);
+    var m = {
+        type: "inbound", 
+        when: new Date().getTime(), 
+        accountId: message.InboundMessage.AccountId,
+        message: message, 
+        body: body
+    };
+    notifier.emit("notify", m);
+}).on('delivered', function (message, body) {
+    console.log("Got 'delivered' push for AccountId '%s'", message.MessageDelivered.AccountId);
+    var m = {
+        type: "delivered", 
+        when: new Date().getTime(), 
+        accountId: message.MessageDelivered.AccountId,
+        message: message, 
+        body: body
+    };
+    notifier.emit("notify", m);
+}).on('failure', function (message, body) {
+    console.log("Got 'failure' push for AccountId '%s'", message.MessageFailed.AccountId);
+    var m = {
+        type: "failure", 
+        when: new Date().getTime(), 
+        accountId: message.MessageFailed.AccountId,
+        message: message, 
+        body: body
+    };
+    notifier.emit("notify", m);
 });
 
 function validatePushRequest(req, res) {
@@ -47,8 +81,13 @@ function validateClientRequest(req, res) {
     return true;
 }
 
+
+
+
 var IP = process.env.OPENSHIFT_NODEJS_IP || process.env.IP || '127.0.0.1',
     PORT = process.env.OPENSHIFT_NODEJS_PORT || process.env.PORT || 8080;
+
+var listenRegex = /\/listen\/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})/;
 
 http.createServer(function(req, res) {
     
@@ -91,7 +130,8 @@ http.createServer(function(req, res) {
 		return;
     }
 
-    if (req.url == '/listen') {
+    var match = listenRegex.exec(req.url);
+    if (match != null) {
         
         if (!validateClientRequest(req, res))
             return;
@@ -102,16 +142,17 @@ http.createServer(function(req, res) {
             'Connection': 'keep-alive'
         });
         
-        var thisClient = clientIndex;
-        clients[thisClient] = { req: req, res: res };
-        clientIndex++;
-        
-        console.log('Client %s connected', thisClient);
+        var client = clients.add(req, res);
+        client.accountId = match[1].toLowerCase();
+
+        console.log("Client '%s' connected with AccountID '%s'", getClientAddress(client), client.accountId);
         
         res.on('close', function() {
-            console.log('Client %s left', thisClient);
-            delete clients[thisClient];
+            clients.remove(client);
+            console.log("Client '%s' disconnected with AccountID '%s'", getClientAddress(client), client.accountId);
         });
+
+        notifier.emit('connected', client);
 		
 		return;
     }
@@ -124,10 +165,18 @@ http.createServer(function(req, res) {
 		
 		return;
     }
+    
+    if (req.url == '/') {
+        
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        var fileStream = fs.createReadStream(__dirname + "/index.html");
+        fileStream.pipe(res);
+        
+        return;
+    }
 	
-	res.writeHead(200, { 'Content-Type': 'text/html' });
-	var fileStream = fs.createReadStream(__dirname + "/index.html");
-	fileStream.pipe(res);
+	res.writeHead(404, { 'Content-Type': 'text/plain-text' });
+	res.end("Not Found");
 	
 }).listen(PORT, IP, function() {
     console.log("Server started: http://%s:%s", IP, PORT);

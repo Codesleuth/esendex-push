@@ -1,140 +1,128 @@
-var sinon = require("sinon");
+var sinon = require("sinon"),
+	assert = require("assert");
 
 describe("PushHandler", function () {
 
 	describe("Emit Inbound Event", function () {
 
+		var pusher;
+		var originalBody;
 		var expectedMessage;
-		var parseRequestStub;
+		var requestParserMock;
 		var emitStub;
 		var requestSpy;
+		var result;
 
 		before(function () {
 			var PushHandler = require("../lib/pushhandler");
-			var pusher = new PushHandler();
+			pusher = new PushHandler();
 
+			originalBody = "some body";
 			expectedMessage = {};
 
-			parseRequestStub = pusher.parseRequest = sinon.stub();
+			requestParserMock = pusher.requestParser = { Parse: sinon.stub() };
 			emitStub = pusher.emit = sinon.stub();
 			requestSpy = sinon.spy();
 
-			parseRequestStub.callsArgWith(1, expectedMessage);
+			requestParserMock.Parse
+							 .callsArgWith(1, expectedMessage, originalBody);
 
-			pusher.inbound(requestSpy);
+			result = pusher.inbound(requestSpy);
 		});
 
 		
 		it('should have parsed the request', function () {
-			sinon.assert.calledWith(parseRequestStub, requestSpy);
+			sinon.assert.calledWith(requestParserMock.Parse, requestSpy);
 		});
 		
-		it('should have emitted the inbound event', function () {
-			sinon.assert.calledWith(emitStub, "inbound", expectedMessage);
+		it('should have emitted the "inbound" message and original body', function () {
+			sinon.assert.calledWith(emitStub, "inbound", expectedMessage, originalBody);
+		});
+		
+		it('should have returned itself', function () {
+			assert.equal(result, pusher);
 		});
 	});
 
 	describe("Emit Delivered Event", function () {
 
+		var pusher;
+		var originalBody;
 		var expectedMessage;
-		var parseRequestStub;
+		var requestParserMock;
 		var emitStub;
 		var requestSpy;
+		var result;
 
 		before(function () {
 			var PushHandler = require("../lib/pushhandler");
-			var pusher = new PushHandler();
+			pusher = new PushHandler();
 
+			originalBody = "some body";
 			expectedMessage = {};
 
-			parseRequestStub = pusher.parseRequest = sinon.stub();
+			requestParserMock = pusher.requestParser = { Parse: sinon.stub() };
 			emitStub = pusher.emit = sinon.stub();
 			requestSpy = sinon.spy();
 
-			parseRequestStub.callsArgWith(1, expectedMessage);
+			requestParserMock.Parse
+							 .callsArgWith(1, expectedMessage, originalBody);
 
-			pusher.delivered(requestSpy);
+			result = pusher.delivered(requestSpy);
 		});
 
 		
 		it('should have parsed the request', function () {
-			sinon.assert.calledWith(parseRequestStub, requestSpy);
+			sinon.assert.calledWith(requestParserMock.Parse, requestSpy);
 		});
 		
-		it('should have emitted the delivered event', function () {
-			sinon.assert.calledWith(emitStub, "delivered", expectedMessage);
+		it('should have emitted the "delivered" message and original body', function () {
+			sinon.assert.calledWith(emitStub, "delivered", expectedMessage, originalBody);
+		});
+		
+		it('should have returned itself', function () {
+			assert.equal(result, pusher);
 		});
 	});
 
 	describe("Emit Failure Event", function () {
 
+		var pusher;
+		var originalBody;
 		var expectedMessage;
-		var parseRequestStub;
+		var requestParserMock;
 		var emitStub;
 		var requestSpy;
+		var result;
 
 		before(function () {
 			var PushHandler = require("../lib/pushhandler");
-			var pusher = new PushHandler();
+			pusher = new PushHandler();
 
+			originalBody = "some body";
 			expectedMessage = {};
 
-			parseRequestStub = pusher.parseRequest = sinon.stub();
+			requestParserMock = pusher.requestParser = { Parse: sinon.stub() };
 			emitStub = pusher.emit = sinon.stub();
 			requestSpy = sinon.spy();
 
-			parseRequestStub.callsArgWith(1, expectedMessage);
+			requestParserMock.Parse
+							 .callsArgWith(1, expectedMessage, originalBody);
 
-			pusher.failure(requestSpy);
+			result = pusher.failure(requestSpy);
 		});
 
 		
 		it('should have parsed the request', function () {
-			sinon.assert.calledWith(parseRequestStub, requestSpy);
+			sinon.assert.calledWith(requestParserMock.Parse, requestSpy);
 		});
 		
-		it('should have emitted the failure event', function () {
-			sinon.assert.calledWith(emitStub, "failure", expectedMessage);
+		it('should have emitted the "failure" message and original body', function () {
+			sinon.assert.calledWith(emitStub, "failure", expectedMessage, originalBody);
 		});
-	});
-
-	describe("Parse Request", function () {
-
-		var requestStub;
-		var callbackStub;
-		var expectedParsedMessage;
-
-		before(function () {
-			var PushHandler = require("../lib/pushhandler");
-			var pusher = new PushHandler();
-
-			requestStub = { on: sinon.stub() };
-			callbackStub = sinon.stub();
-			pusher.xmlparser = { parseString: sinon.stub() };
-			expectedParsedMessage = {};
-
-			requestStub.on
-					   .withArgs("end", sinon.match.func)
-					   .callsArg(1);
-			pusher.xmlparser
-				  .parseString
-				  .withArgs(sinon.match.string, sinon.match.func)
-				  .callsArgWith(1, null, expectedParsedMessage);
-
-			pusher.parseRequest(requestStub, callbackStub);
-		});
-
-
-		it('should listen to the "data" event on the request', function () {
-			sinon.assert.calledWith(requestStub.on, "data", sinon.match.func);
-		});
-
-		it('should listen to the "end" event on the request', function () {
-			sinon.assert.calledWith(requestStub.on, "end", sinon.match.func);
-		});
-
-		it('should have called the callback with the expected parsed message', function () {
-			sinon.assert.calledWith(callbackStub, expectedParsedMessage);
+		
+		it('should have returned itself', function () {
+			assert.equal(result, pusher);
 		});
 	});
 
