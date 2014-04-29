@@ -6,7 +6,7 @@ This is a consumer proof of concept implementation of the [Esendex Push Notifica
 It was written to be hosted on the [Red Hat OpenShift](https://www.openshift.com/) platform but can be modified easily to host on other platforms such as [heroku](https://www.heroku.com) with little effort.
 
 ### Example App
-This app is currently hosted at [push-codesleuth.rhcloud.com](http://push-codesleuth.rhcloud.com). This will echo all push notifications to the client, regardless of which account, and therefore you may see push notifications for other users who are on the site at the same time. I hope to change this very soon to limit the pushes by account ID, so bear with it!
+This app is currently hosted at [push-codesleuth.rhcloud.com](http://push-codesleuth.rhcloud.com). This will echo all push notifications to the client for the specified account. Previously, you would see push notifications for other users who are on the site at the same time, but the app has been changed to require an account ID when listening for push relays.
 
 ### Setting Up
 Clone the repository and install the dependency modules with:
