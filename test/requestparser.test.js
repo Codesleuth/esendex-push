@@ -1,132 +1,93 @@
 var sinon = require("sinon"),
-	assert = require("assert");
+    assert = require("assert"),
+    proxyquire = require('proxyquire');
 
 describe("RequestParser", function () {
 
-	describe("Parse with valid XML body", function () {
+  describe("Parse with valid XML body", function () {
 
-		var xml2jsMock;
-		var requestStub;
-		var expectedData;
-		var expectedParsedMessage;
-		var callbackSpy;
+    var requestStub;
+    var expectedData;
+    var expectedParsedResult;
+    var parseStringStub;
+    var parserStub;
+    var callbackSpy;
 
-		before(function () {
+    before(function () {
+      expectedData = "some xml";
+      expectedParsedResult = "some parsed result";
 
-			expectedData = "some xml";
-			expectedParsedMessage = "some message";
+      parseStringStub = sinon.stub().callsArgWith(1, null, expectedParsedResult);
+      parserStub = sinon.stub().returns({ parseString: parseStringStub });
 
-			xml2jsMock = { parseString: sinon.stub() };
+      requestStub = { on: sinon.stub() };
 
-			var RequestParser = require("../lib/requestparser");
-			var parser = new RequestParser(xml2jsMock);
+      requestStub.on
+        .withArgs("data", sinon.match.func)
+        .callsArgWith(1, expectedData);
 
-			requestStub = { on: sinon.stub() };
+      requestStub.on
+        .withArgs("end", sinon.match.func)
+        .callsArg(1);
 
-			requestStub.on
-					   .withArgs("data", sinon.match.func)
-					   .callsArgWith(1, expectedData);
+      callbackSpy = sinon.spy();
 
-			requestStub.on
-					   .withArgs("end", sinon.match.func)
-					   .callsArg(1);
+      var RequestParser = proxyquire("../lib/requestparser", { 'xml2js': { Parser: parserStub } });
+      RequestParser.create().Parse(requestStub, callbackSpy);
+    });
 
-			xml2jsMock.parseString
-				  	  .withArgs(expectedData, sinon.match.func)
-				      .callsArgWith(1, null, expectedParsedMessage, expectedData);
+    
+    it('should listen to the "data" event on the request', function () {
+      sinon.assert.calledWith(requestStub.on, "data", sinon.match.func);
+    });
 
-			callbackSpy = sinon.spy();
+    it('should listen to the "end" event on the request', function () {
+      sinon.assert.calledWith(requestStub.on, "end", sinon.match.func);
+    });
 
-			parser.Parse(requestStub, callbackSpy);
-		});
+    it('should parse the request body', function () {
+      sinon.assert.calledWith(parseStringStub, expectedData, sinon.match.func);
+    });
 
-		
-		it('should listen to the "data" event on the request', function () {
-			sinon.assert.calledWith(requestStub.on, "data", sinon.match.func);
-		});
+    it('should have called the callback with the expected parsed message and raw data', function () {
+      sinon.assert.calledWith(callbackSpy, null, expectedParsedResult, expectedData);
+    });
 
-		it('should listen to the "end" event on the request', function () {
-			sinon.assert.calledWith(requestStub.on, "end", sinon.match.func);
-		});
+  });
 
-		it('should parse the request body', function () {
-			sinon.assert.calledWith(xml2jsMock.parseString, expectedData, sinon.match.func);
-		});
+  describe("Parse with invalid XML body", function () {
 
-		it('should have called the callback with the expected parsed message and raw data', function () {
-			sinon.assert.calledWith(callbackSpy, expectedParsedMessage, expectedData);
-		});
-	});
+    var expectedData;
+    var parseStringError;
+    var callbackSpy;
 
-	describe("Parse with invalid XML body", function () {
+    before(function () {
+      expectedData = "some xml";
+      parseStringError = new Error('some error');
 
-		var callbackSpy;
+      var parseStringStub = sinon.stub().callsArgWith(1, parseStringError, null);
+      var parserStub = sinon.stub().returns({ parseString: parseStringStub });
 
-		before(function () {
+      var requestStub = { on: sinon.stub() };
 
-			var xml2jsMock = { parseString: sinon.stub() };
+      requestStub.on
+        .withArgs("data", sinon.match.func)
+        .callsArgWith(1, expectedData);
 
-			var RequestParser = require("../lib/requestparser");
-			var parser = new RequestParser(xml2jsMock);
+      requestStub.on
+        .withArgs("end", sinon.match.func)
+        .callsArg(1);
 
-			var requestStub = { on: sinon.stub() };
+      callbackSpy = sinon.spy();
 
-			requestStub.on
-					   .withArgs("data", sinon.match.func)
-					   .callsArgWith(1, "some xml");
+      var RequestParser = proxyquire("../lib/requestparser", { 'xml2js': { Parser: parserStub } });
+      RequestParser.create().Parse(requestStub, callbackSpy);
+    });
 
-			requestStub.on
-					   .withArgs("end", sinon.match.func)
-					   .callsArg(1);
+    it('should have called the callback with the error, null parsed message and raw data', function () {
+      sinon.assert.calledWith(callbackSpy, parseStringError, null, expectedData);
+    });
 
-			xml2jsMock.parseString
-				  	  .withArgs(sinon.match.string, sinon.match.func)
-				      .callsArgWith(1, "not null", undefined);
+  });
 
-			callbackSpy = sinon.spy();
-
-			parser.Parse(requestStub, callbackSpy);
-		});
-
-
-		it('should not have called the callback', function () {
-			sinon.assert.notCalled(callbackSpy);
-		});
-	});
-
-	describe("Parse with exception thrown by parser", function () {
-
-		var callbackSpy;
-
-		before(function () {
-
-			var xml2jsMock = { parseString: sinon.stub() };
-
-			var RequestParser = require("../lib/requestparser");
-			var parser = new RequestParser(xml2jsMock);
-
-			var requestStub = { on: sinon.stub() };
-
-			requestStub.on
-					   .withArgs("data", sinon.match.func)
-					   .callsArgWith(1, "some xml");
-
-			requestStub.on
-					   .withArgs("end", sinon.match.func)
-					   .callsArg(1);
-
-			xml2jsMock.parseString
-				  	  .withArgs(sinon.match.string, sinon.match.func)
-				      .throws();
-
-			callbackSpy = sinon.spy();
-
-			parser.Parse(requestStub, callbackSpy);
-		});
-
-
-		it('should not have called the callback', function () {
-			sinon.assert.notCalled(callbackSpy);
-		});
-	});
 });
