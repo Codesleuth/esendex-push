@@ -23,8 +23,21 @@ $(function () {
   }
 
 
+  function loadAccountId() {
+    return $.cookie('accountId');
+  }
+
+  function saveAccountId(accountId) {
+    $.cookie('accountId', accountId, { expires: 1 });
+  }
+
   var socket = io.connect();
-  socket.accountid = '00000000-0000-0000-0000-000000000000';
+
+  +function () {
+    var accountId = loadAccountId();
+    if (accountId) $('#accountid').val(accountId);
+    socket.accountid = accountId || '00000000-0000-0000-0000-000000000000';
+  }();
 
   socket.on('connect', function () {
     postEvent('Connected to server.', 'success');
@@ -52,8 +65,11 @@ $(function () {
     var $html = $('<div class="panel">\
   <div class="panel-heading">\
     <a class="message-summary collapsed text" data-toggle="collapse" data-parent="#messages" href="#">\
-      <span class="glyphicon glyph"></span>\
-      <span class="message-id"></span>\
+      <div>\
+        <span class="glyphicon glyph"></span>\
+        <span class="message-id"></span>\
+        <time class="timeago"></time>\
+      </div>\
       <span class="message-body"></span>\
     </a>\
   </div>\
@@ -65,16 +81,20 @@ $(function () {
 </div>');
 
     var id = new Date().getTime() + message.MessageId[0];
+    var now = new Date();
 
+    $html.find('.timeago').attr('datetime', now.toISOString()).text(now.toLocaleTimeString());
     $html.find('a').attr('href', '#' + id);
     $html.find('.message-panel').attr('id', id);
     $html.find('.glyphicon').addClass(glyphicon);
-    $html.find('.message-id').text(message.MessageId);
+    $html.find('.message-id').text(message.MessageId.substr(0, 8));
     if (message.MessageText) $html.find('.message-body').text(message.MessageText);
     $html.find('.message-data').html(syntaxHighlight(message));
     $html.addClass(panelclass);
 
     $('#messages').prepend($html);
+
+    $html.find('.timeago').timeago();
   }
 
   function addInboundMessage(message) {
@@ -101,6 +121,8 @@ $(function () {
     
     socket.accountid = accountId;
     socket.emit('accountid', accountId);
+
+    saveAccountId(accountId);
 
     return false;
   });

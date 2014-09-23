@@ -14,9 +14,10 @@
   font-size: 15px;
 }
 
-.glyph{
+.glyph {
   font-size: 20px;
   margin-right: 4px;
+  top: 4px;
 }
 
 #accountid.bad {   
@@ -44,14 +45,8 @@ a, a:hover {
 }
 
 .message-id {
-  display: inline-block;
   font-family: "Courier New";
   font-weight: bold;
-  width: 90px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  vertical-align: middle;
 }
 
 span.string {
@@ -60,4 +55,8 @@ span.string {
 
 span.number {
   color: #009999;
+}
+
+time {
+  color: #626262;
 }
