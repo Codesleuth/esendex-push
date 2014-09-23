@@ -110,6 +110,7 @@ $(function () {
   $("#clear").click(function (event) {
     event.preventDefault();
 
-    $('#events').empty();
+    $('#client-events').empty();
+    $('#accordion').empty();
   });
 });
