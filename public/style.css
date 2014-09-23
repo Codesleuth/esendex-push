@@ -18,3 +18,46 @@
   font-size: 20px;
   margin-right: 4px;
 }
+
+#accountid.bad {   
+  border-color: rgba(255, 0, 0, 0.8);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset, 0 0 8px rgba(255, 0, 0, 0.6);
+  outline: 0 none;
+}
+
+.panel-heading button {
+  position: absolute;
+  right: 22px;
+  top: 7px;
+}
+
+.message-panel .panel-body {
+  padding: 5px;
+}
+
+a, a:hover {
+  text-decoration: none;
+}
+
+.message-summary {
+  display: block;
+}
+
+.message-id {
+  display: inline-block;
+  font-family: "Courier New";
+  font-weight: bold;
+  width: 90px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+
+span.string {
+  color: #d14;
+}
+
+span.number {
+  color: #009999;
+}

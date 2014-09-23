@@ -27,79 +27,77 @@ $(function () {
   socket.accountid = '00000000-0000-0000-0000-000000000000';
 
   socket.on('connect', function () {
-    writeEventHTML("Connected to server.");
+    postEvent('Connected to server.', 'success');
     socket.emit('accountid', socket.accountid);
-  });
-  socket.on('disconnect', function () {
-    writeEventHTML("Disconnected from server.");
-  });
-
-  socket.on('inbound', function (data) {
-    postEvent('inbound', data);
-  });
-  socket.on('delivered', function (data) {
-    postEvent('delivered', data);
-  });
-  socket.on('failure', function (data) {
-    postEvent('failure', data);
+  }).on('disconnect', function () {
+    postEvent('Disconnected from server.', 'danger');
+  }).on('inbound', function (message) {
+    addInboundMessage(message);
+  }).on('delivered', function (message) {
+    addDeliveredMessage(message);
+  }).on('failure', function (message) {
+    addFailureMessage(message);
+  }).on('accountid', function (accountId) {
+    postEvent('AccountID set to ' + accountId);
   });
 
-  socket.on('accountid', function (data) {
-    writeEventHTML('AccountID set to ' + data);
-  });
+
+
+  function postEvent(message, style) {
+    style = style || 'info';
+    $('#client-events').prepend($('<pre>').addClass('btn-' + style).text(message));
+  }
+
+  function addMessageRow(panelclass, glyphicon, message) {
+    var $html = $('<div class="panel">\
+  <div class="panel-heading">\
+    <a class="message-summary collapsed text" data-toggle="collapse" data-parent="#messages" href="#">\
+      <span class="glyphicon glyph"></span>\
+      <span class="message-id"></span>\
+      <span class="message-body"></span>\
+    </a>\
+  </div>\
+  <div class="message-panel panel-collapse collapse" style="height: 0px;">\
+    <div class="panel-body">\
+      <pre class="message-data"></pre>\
+    </div>\
+  </div>\
+</div>');
+
+    var id = new Date().getTime() + message.MessageId[0];
+
+    $html.find('a').attr('href', '#' + id);
+    $html.find('.message-panel').attr('id', id);
+    $html.find('.glyphicon').addClass(glyphicon);
+    $html.find('.message-id').text(message.MessageId);
+    if (message.MessageText) $html.find('.message-body').text(message.MessageText);
+    $html.find('.message-data').html(syntaxHighlight(message));
+    $html.addClass(panelclass);
+
+    $('#messages').prepend($html);
+  }
+
+  function addInboundMessage(message) {
+    addMessageRow('panel-success', 'glyphicon-resize-small', message.push);
+  }
+
+  function addDeliveredMessage(message) {
+    addMessageRow('panel-info', 'glyphicon-resize-full', message.push);
+  }
+
+  function addFailureMessage(message) {
+    addMessageRow('panel-danger', 'glyphicon-remove', message.push);
+  }
 
 
   var guidRegex = /^[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}$/i;
 
-  function writeEventHTML(html) {
-     $('#client-events').prepend($("<pre class=\"btn-primary\">").html(html));
-  }
-
-    var hash = 2;
-
-  function postEvent(type, raw) {
-   
-    var html = '<div class="panel panel-default"> \
-                         <div class="panel-heading"> \
-                            <a data-toggle="collapse" data-parent="#accordion" href="#'+ hash +'" class="collapsed text">##################</a> \
-                </div> \
-           <div id="'+ hash +'" class="panel-collapse collapse" style="height: 0px;"> \
-               <div class="panel-body"> \
-                   <pre>'+ syntaxHighlight(raw) +'</pre> \
-               </div> \
-           </div> \
-       </div>';
-
-   if (type == "inbound") {
-
-        html = html.replace("##################", '<span class="glyphicon glyphicon-resize-small glyph"></span>' + raw.push.MessageId + ' - ' + raw.push.MessageText);
-        html = html.replace("panel-default", "panel-success");
-        $('#accordion').prepend($(html));       
-      }
-
-      if (type == "delivered") {
-
-        html = html.replace("##################", '<span class="glyphicon glyphicon-resize-full glyph"></span>' + raw.push.MessageId);
-        html = html.replace("panel-default", "panel-info");
-        $('#accordion').prepend($(html));
-      }
-
-      if (type == "failure") {
-
-        html = html.replace("##################", '<span class="glyphicon glyphicon-remove glyph"></span>' + raw.push.MessageId);
-        html = html.replace("panel-default", "panel-danger");
-        $('#accordion').prepend($(html));
-      }
-      
-      hash++;
-  }
-
-  $("#setAccountId").click(function (event) {
+  $('#setAccountId').click(function (event) {
     event.preventDefault();
-    var accountId = $("#accountid").val();
+    var accountId = $('#accountid').val();
 
     if (!guidRegex.test(accountId))
-      return writeEventText("The specified ID is not a valid GUID: " + accountId);
+      return;
     
     socket.accountid = accountId;
     socket.emit('accountid', accountId);
@@ -107,10 +105,23 @@ $(function () {
     return false;
   });
 
-  $("#clear").click(function (event) {
-    event.preventDefault();
+  $('#accountid').blur(function () {
+    var textbox = $('#accountid');
+    var text = textbox.val();
 
-    $('#client-events').empty();
-    $('#accordion').empty();
+    if (text.length > 0 && !guidRegex.test(text))
+      return textbox.addClass('bad');
+    textbox.removeClass('bad');
   });
+
+  $('#clear-statuses').click(function (event) {
+    event.preventDefault();
+    $('#client-events').empty();
+  });
+
+  $('#clear-messages').click(function (event) {
+    event.preventDefault();
+    $('#messages').empty();
+  });
+
 });

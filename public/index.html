@@ -23,8 +23,8 @@
       }
   </script>
 
-    <script src="index.js"></script>
-    <link rel="stylesheet" href="style.css" />
+  <script src="index.js"></script>
+  <link rel="stylesheet" href="style.css" />
 
 </head>
 
@@ -45,25 +45,21 @@
 
             <input type="text" id="accountid" placeHolder="eg. 00000000-0000-0000-0000-000000000000" size="36" />
             <button type="submit" class="btn btn-sm btn-success" id="setAccountId">Subscribe</button>
-            <button class="btn btn-sm btn-warning" id="clear">Clear</button>
 
           </div>
         </form>
       </div>
     </div>
 
-
     <div class="col-xs-12">
       <div class="panel panel-primary">
         <div class="panel-heading">
-          Status Messages
+          <span>Status Messages</span><button class="btn btn-sm btn-warning" id="clear-statuses">Clear</button>
         </div>
         <div class="panel-body clientMsg">
-
           <div id="client-events">
 
           </div>
-
         </div>
       </div>
     </div>
@@ -71,10 +67,10 @@
     <div class="col-xs-12">
       <div class="panel panel-default">
         <div class="panel-heading">
-          Server 'Push' Messages
+          <span>Server 'Push' Messages</span><button class="btn btn-sm btn-warning" id="clear-messages">Clear</button>
         </div>
         <div class="panel-body serverMsg">
-          <div class="panel-group server-events" id="accordion">
+          <div class="panel-group server-events" id="messages">
 
           </div>
         </div>
