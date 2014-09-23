@@ -1,29 +1,20 @@
-body {
-  background-color: black;
-  color: white;
-  padding: 0;
-  margin: 0;
+.clientMsg {
+    max-height: 150px;
+    overflow-y: scroll;
+}
+.serverMsg {
+    max-height: 350px;
+    overflow-y: scroll;
 }
 
-#events {
-  list-style-type: none;
-  padding: 0;
+.text {
+  text-decoration: none;
+  color: black;
+  font-family: sans-serif;
+  font-size: 15px;
 }
 
-#events li {
-  height: 58px;
-  padding-left: 60px;
-  border: solid 1px white;
-}
-
-#events li.delivered {
-  background-color: #3B7A57;
-}
-
-#events li.inbound {
-  background-color: #2E5894;
-}
-
-#events li.failure {
-  background-color: #860111;
+.glyph{
+  font-size: 20px;
+  margin-right: 4px;
 }
