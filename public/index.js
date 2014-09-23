@@ -27,24 +27,21 @@ $(function () {
   socket.accountid = '00000000-0000-0000-0000-000000000000';
 
   socket.on('connect', function () {
-    writeEventText("Connected to server.");
+    writeEventHTML("Connected to server.");
     socket.emit('accountid', socket.accountid);
   });
   socket.on('disconnect', function () {
-    writeEventText("Disconnected from server.");
+    writeEventHTML("Disconnected from server.");
   });
 
   socket.on('inbound', function (data) {
     postEvent('inbound', data);
-    //writeEventHTML(syntaxHighlight(data));
   });
   socket.on('delivered', function (data) {
     postEvent('delivered', data);
-    //writeEventHTML(syntaxHighlight(data));
   });
   socket.on('failure', function (data) {
     postEvent('failure', data);
-    //writeEventHTML(syntaxHighlight(data));
   });
 
   socket.on('accountid', function (data) {
@@ -54,23 +51,47 @@ $(function () {
 
   var guidRegex = /^[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}$/i;
 
-  function writeEventText(text) {
-    $('#events').prepend($("<pre>").text(text));
-  }
-
   function writeEventHTML(html) {
-    $('#events').prepend($("<pre>").html(html));
+     $('#client-events').prepend($("<pre class=\"btn-primary\">").html(html));
   }
 
-  function postEvent(type, e) {
-    var li = $('<li>');
-    li.addClass(type);
-    li.append($('<span>').text(e.push.Id));
-    li.append($('<br>'));
-    if (e.push.MessageText)
-      li.append($('<span>').text(e.push.MessageText));
+    var hash = 2;
 
-    $('#events').prepend(li);
+  function postEvent(type, raw) {
+   
+    var html = '<div class="panel panel-default"> \
+                         <div class="panel-heading"> \
+                            <a data-toggle="collapse" data-parent="#accordion" href="#'+ hash +'" class="collapsed text">##################</a> \
+                </div> \
+           <div id="'+ hash +'" class="panel-collapse collapse" style="height: 0px;"> \
+               <div class="panel-body"> \
+                   <pre>'+ syntaxHighlight(raw) +'</pre> \
+               </div> \
+           </div> \
+       </div>';
+
+   if (type == "inbound") {
+
+        html = html.replace("##################", '<span class="glyphicon glyphicon-resize-small glyph"></span>' + raw.push.MessageId + ' - ' + raw.push.MessageText);
+        html = html.replace("panel-default", "panel-success");
+        $('#accordion').prepend($(html));       
+      }
+
+      if (type == "delivered") {
+
+        html = html.replace("##################", '<span class="glyphicon glyphicon-resize-full glyph"></span>' + raw.push.MessageId);
+        html = html.replace("panel-default", "panel-info");
+        $('#accordion').prepend($(html));
+      }
+
+      if (type == "failure") {
+
+        html = html.replace("##################", '<span class="glyphicon glyphicon-remove glyph"></span>' + raw.push.MessageId);
+        html = html.replace("panel-default", "panel-danger");
+        $('#accordion').prepend($(html));
+      }
+      
+      hash++;
   }
 
   $("#setAccountId").click(function (event) {
